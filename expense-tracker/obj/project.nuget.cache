@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "LjBXZZPi9Og=",
+  "success": true,
+  "projectFilePath": "D:\\Projects\\roadmap.sh\\expense-tracker-cli\\expense-tracker\\expense-tracker.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Imadh\\.nuget\\packages\\system.commandline\\2.0.3\\system.commandline.2.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}
