@@ -1,0 +1,14 @@
+[
+  {
+    "ID": "97739a11-fa0e-4743-a142-2b8e8937e6bd",
+    "AccountType": "Savings",
+    "Name": "SAB",
+    "Balance": 10000
+  },
+  {
+    "ID": "74dbb72e-ad88-41f2-8561-229d943a03a4",
+    "AccountType": "Savings",
+    "Name": "HNB",
+    "Balance": 250000
+  }
+]
