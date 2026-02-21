@@ -10,5 +10,11 @@
     "AccountType": "Savings",
     "Name": "HNB",
     "Balance": 250000
+  },
+  {
+    "ID": "19423abd-606e-4124-978f-7e6431e88896",
+    "AccountType": "Savings",
+    "Name": "Commercial",
+    "Balance": 1000
   }
 ]

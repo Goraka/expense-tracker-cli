@@ -1,8 +1,16 @@
 using System.CommandLine;
+using Microsoft.Extensions.Configuration;
 
-public static class CommandController
+public class CommandController
 {
-    public static Command SC_CREATE()
+    private static Config _configurationBuilder;
+
+    public CommandController(Config config)
+    {
+        _configurationBuilder = config;
+    }
+
+    public Command SC_CREATE()
     {
         Option<string> account = new Option<string>("--account", ["--acc"])
         {
@@ -33,13 +41,21 @@ public static class CommandController
             decimal budget = context.GetValue(budgetAmt);
             string category = context.GetValue(_category) ?? string.Empty;
 
-            expenseTracker.Create(acc, budget, category);
+            if(budget > 0)
+            {
+                MonthlyBudget monthlyBudget = new MonthlyBudget { Amount = budget };
+                expenseTracker.ConfigAppSettings(monthlyBudget, _configurationBuilder).Wait();
+                Console.WriteLine($"Creating a monthly budget of {budgetAmt}");
+                return;
+            }
+
+            expenseTracker.Create(acc, category).Wait();
         });
 
         return createCommand;
     }
 
-    public static Command SC_ADD()
+    public Command SC_ADD()
     {
         var addCommand = new Command("add", "Add an expense")
         {
@@ -65,7 +81,7 @@ public static class CommandController
         return addCommand;
     }
 
-    public static Command SC_LIST()
+    public Command SC_LIST()
     {
         var listCommand = new Command("list", "List all expenses");
 
