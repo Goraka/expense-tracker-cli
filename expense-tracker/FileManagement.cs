@@ -49,7 +49,7 @@ public class FileManagement
     public async Task CreateFile<T>(T model, string _fileName)
     {
         List<T> models = new List<T>();
-        ;
+        
         if (!Directory.Exists(_folderPath))
         {
             Directory.CreateDirectory(_folderPath);

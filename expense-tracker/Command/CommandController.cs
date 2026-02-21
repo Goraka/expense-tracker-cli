@@ -1,13 +1,17 @@
 using System.CommandLine;
 using Microsoft.Extensions.Configuration;
+using static System.Console;
 
 public class CommandController
 {
-    private static Config _configurationBuilder;
+    private static Config? _configurationBuilder;
+    private readonly ConsoleColor foregroundColor = ForegroundColor;
+    private readonly decimal _currentBudget = 0;
 
     public CommandController(Config config)
     {
         _configurationBuilder = config;
+        _currentBudget = _configurationBuilder.MonthlyBudget.Amount;
     }
 
     public Command SC_CREATE()
@@ -41,15 +45,39 @@ public class CommandController
             decimal budget = context.GetValue(budgetAmt);
             string category = context.GetValue(_category) ?? string.Empty;
 
-            if(budget > 0)
+            if (string.IsNullOrEmpty(acc) && string.IsNullOrEmpty(category) && budget <= 0)
             {
-                MonthlyBudget monthlyBudget = new MonthlyBudget { Amount = budget };
-                expenseTracker.ConfigAppSettings(monthlyBudget, _configurationBuilder).Wait();
-                Console.WriteLine($"Creating a monthly budget of {budgetAmt}");
+                ForegroundColor = ConsoleColor.Red;
+                WriteLine("No options provided. Please provide an option to create an account, budget or category.");
+                ForegroundColor = foregroundColor;
+                return;
+            }
+            else if (!string.IsNullOrEmpty(acc) && !string.IsNullOrEmpty(category) && budget > 0)
+            {
+                ForegroundColor = ConsoleColor.Red;
+                WriteLine("Invalid command. Please provide only one option at a time.");
+                ForegroundColor = foregroundColor;
                 return;
             }
 
-            expenseTracker.Create(acc, category).Wait();
+            if (budget > 0)
+            {
+                MonthlyBudget monthlyBudget = new MonthlyBudget { Amount = budget };
+                ConfigSettings.SetValue(monthlyBudget, _configurationBuilder);
+                WriteLine($"Creating a monthly budget of {budgetAmt}");
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(acc))
+            {
+                expenseTracker.CreateAccounts(acc).Wait();
+            }
+
+            if (!string.IsNullOrEmpty(category))
+            {
+                expenseTracker.CreateCategories(category).Wait();
+            }
+
         });
 
         return createCommand;
@@ -57,25 +85,29 @@ public class CommandController
 
     public Command SC_ADD()
     {
+        var description = new Option<string>("--description", ["--desc"])
+        {
+            Description = "Add a description for the expense",
+        };
+
+        var amount = new Option<decimal>("--amount", ["--amt"])
+        {
+            Description = "Add expense amount to be tracked",
+            Required = true
+        };
+
         var addCommand = new Command("add", "Add an expense")
         {
-            new Option<decimal>("--amount", ["--amt", "--n"])
-            {
-                Description = "Add expense amount to be tracked",
-                Required = true
-            },
-            new Option<string>("--description", ["--desc"])
-            {
-                Description = "Add a description for the expense",
-            }
+            amount,
+            description
         };
 
         addCommand.SetAction(context =>
         {
-            decimal amount = context.GetValue((Option<decimal>)addCommand.Options[0]);
-            string description = context.GetValue((Option<string>)addCommand.Options[1]) ?? string.Empty;
+            decimal amt = context.GetValue(amount);
+            string desc = context.GetValue(description) ?? string.Empty;
 
-            Console.WriteLine($"The amount is {amount} and the description is {description}");
+            WriteLine($"The amount is {amt} and the description is {desc}");
         });
 
         return addCommand;
@@ -89,7 +121,7 @@ public class CommandController
 
         listCommand.SetAction(context =>
         {
-            Console.WriteLine("Listing all expenses...");
+            WriteLine("Listing all expenses...");
         });
 
         return listCommand;
