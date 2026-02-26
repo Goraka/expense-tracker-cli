@@ -13,6 +13,11 @@ public class CommandController
     {
         _configurationBuilder = config;
         _currentBudget = _configurationBuilder.MonthlyBudget.Amount;
+
+        if (_configurationBuilder.MonthlyBudget.Expenses > 0)
+        {
+            _currentBudget = _configurationBuilder.MonthlyBudget.Expenses;
+        }
     }
 
     public Command SC_CREATE()
@@ -63,7 +68,7 @@ public class CommandController
 
             if (budget > 0)
             {
-                MonthlyBudget monthlyBudget = new MonthlyBudget { Amount = budget };
+                MonthlyBudget monthlyBudget = new MonthlyBudget { Amount = budget, Expenses = 0 };
                 ConfigSettings.SetValue(monthlyBudget, _configurationBuilder);
                 WriteLine($"Creating a monthly budget of {budgetAmt}");
                 return;
@@ -152,6 +157,9 @@ public class CommandController
 
             if (res != null)
             {
+                MonthlyBudget budget = new MonthlyBudget { Amount = _currentBudget, Expenses = _currentBudget - amt };
+                ConfigSettings.SetValue(budget, _configurationBuilder);
+
                 WriteLine($"New expense added for {res.Account.Name}, Account balance is {res.Account.Balance}");
             }
         });

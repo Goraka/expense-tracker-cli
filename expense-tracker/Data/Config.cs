@@ -6,4 +6,5 @@ public class Config
 public class MonthlyBudget
 {
     public decimal Amount { get; set; }
+    public decimal Expenses { get; set; }
 }
