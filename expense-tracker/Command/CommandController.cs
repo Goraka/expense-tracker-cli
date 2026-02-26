@@ -1,4 +1,5 @@
 using System.CommandLine;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using static System.Console;
 
@@ -85,29 +86,74 @@ public class CommandController
 
     public Command SC_ADD()
     {
+        ExpenseTracker expenseTracker = new ExpenseTracker();
+        var accountInfo = Task.Run(() => expenseTracker.GetAccounts()).Result;
+        string[] _accountOptionNames = accountInfo.Select(a => a.Name).ToArray();
+
         var description = new Option<string>("--description", ["--desc"])
         {
             Description = "Add a description for the expense",
+            Required = true
         };
 
         var amount = new Option<decimal>("--amount", ["--amt"])
         {
             Description = "Add expense amount to be tracked",
-            Required = true
+            Required = true,
+            DefaultValueFactory = _ => 0
         };
+
+        amount.Validators.Add(result =>
+        {
+            if (result.GetValue(amount) <= 0)
+            {
+                result.AddError("Amount must be greater than 0");
+            }
+        });
+
+        var account = new Option<string>("--acc")
+        {
+            Description = "Select account",
+            Required = true
+        }.AcceptOnlyFromAmong(_accountOptionNames);
 
         var addCommand = new Command("add", "Add an expense")
         {
-            amount,
-            description
+            account,
+            description,
+            amount
         };
 
-        addCommand.SetAction(context =>
+        addCommand.SetAction(async context =>
         {
             decimal amt = context.GetValue(amount);
             string desc = context.GetValue(description) ?? string.Empty;
+            string _acc = context.GetValue(account) ?? string.Empty;
 
-            WriteLine($"The amount is {amt} and the description is {desc}");
+            if (amt > _currentBudget)
+            {
+                ForegroundColor = ConsoleColor.Red;
+                WriteLine("Amount exceeds current budget. Continue? (Y/n) : ");
+                ForegroundColor = foregroundColor;
+                var _continueOverBudget = ReadKey();
+
+                if (_continueOverBudget.Key == ConsoleKey.N) return;
+            }
+
+            if (amt > accountInfo.FirstOrDefault(a => a.Name == _acc)?.Balance)
+            {
+                ForegroundColor = ConsoleColor.Red;
+                WriteLine("Amount exceeds available balance.");
+                ForegroundColor = foregroundColor;
+                return;
+            }
+
+            var res = await expenseTracker.AddExpense(desc, amt, _acc);
+
+            if (res != null)
+            {
+                WriteLine($"New expense added for {res.Account.Name}, Account balance is {res.Account.Balance}");
+            }
         });
 
         return addCommand;
@@ -126,5 +172,4 @@ public class CommandController
 
         return listCommand;
     }
-
 }

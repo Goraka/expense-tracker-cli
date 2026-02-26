@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Xml;
@@ -46,51 +47,54 @@ public class FileManagement
     //         // }
     //     }
 
-    public async Task CreateFile<T>(T model, string _fileName)
+    public async Task<T> CreateFile<T>(T model, string _fileName) where T : IEntity 
     {
-        List<T> models = new List<T>();
-        
         if (!Directory.Exists(_folderPath))
         {
             Directory.CreateDirectory(_folderPath);
         }
 
         string _filePath = Path.Combine(_folderPath, _fileName);
+
         try
         {
-            models = ReadFromFileAsync<List<T>>(_filePath).Result;
+            List<T> models = await ReadFromFileAsync<T>(_filePath);
 
             if (models == null)
             {
                 models = new List<T>();
             }
 
-            models.Add(model);
+            var index = models.FindIndex(x=>x.ID == model.ID);
+
+            if(index != -1)
+            {
+                models[index] = model;
+            }
+            else
+            {
+                models.Add(model);
+            }
         
             string modelJson = JsonSerializer.Serialize(models, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(_filePath, modelJson);
+
+            return model;
         }
         catch(Exception ex)
         {
             throw new Exception($"Failed to write to file '{_filePath}': {ex.Message}");
         }
-
-        // var lstAccounts = ReadFromFileAsync<List<Account>>(accountFilePath).Result;
-        // Console.WriteLine($"Total accounts: {lstAccounts.Count}");
-
-        // foreach(var a in lstAccounts)
-        // {
-        //     Console.WriteLine($"Account ID: {a.ID}, Name: {a.Name}, Type: {a.AccountType}, Balance: {a.Balance}");
-        // }
     }
 
-    public async Task<T> ReadFromFileAsync<T>(string fileName)
+    // Returns a list of Type T
+    public async Task<List<T>> ReadFromFileAsync<T>(string fileName)
     {
         string _filePath = Path.Combine(_folderPath, fileName);
 
         if (!File.Exists(_filePath))
         {
-            return default;
+            return new List<T>();
             // throw new FileNotFoundException($"The file '{fileName}' was not found in the directory '{_folderPath}'.");
         }
 
@@ -101,7 +105,7 @@ public class FileManagement
             throw new InvalidDataException($"The file '{fileName}' is empty or contains invalid data.");
         }
 
-        T? data = JsonSerializer.Deserialize<T>(fileContent);
+        List<T>? data = JsonSerializer.Deserialize<List<T>>(fileContent);
 
         if (data == null)
         {

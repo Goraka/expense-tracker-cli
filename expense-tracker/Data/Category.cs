@@ -1,5 +1,5 @@
-public class Category
+public class Category : IEntity
 {
-    public int Id { get; set; }
+    public Guid ID { get; set; }
     public string Name { get; set; } = string.Empty;
 }

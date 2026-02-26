@@ -9,7 +9,27 @@ public class ExpenseTracker
 
     public ExpenseTracker()
     {
+    }
 
+    public async Task<List<Account>> GetAccounts()
+    {
+        FileManagement _fileManagement = new FileManagement();
+
+        return await _fileManagement.ReadFromFileAsync<Account>(_accountFileName) ?? new List<Account>();
+    }
+
+    private async Task<List<Category>> GetCategories()
+    {
+        FileManagement _fileManagement = new FileManagement();
+
+        return await _fileManagement.ReadFromFileAsync<Category>(_categoryFileName) ?? new List<Category>();
+    }
+
+    private async Task<List<Expense>> GetExpenses()
+    {
+        FileManagement _filemanagement = new FileManagement();
+
+        return await _filemanagement.ReadFromFileAsync<Expense>(_expenseFileName) ?? new List<Expense>();
     }
 
     public async Task CreateAccounts(string account)
@@ -51,7 +71,7 @@ public class ExpenseTracker
             };
 
             // _fileManagement.CreateAccountFile(newAccount);
-            await _fileManagement.CreateFile<Account>(newAccount, _accountFileName);
+            await _fileManagement.CreateFile(newAccount, _accountFileName);
         }
         else
         {
@@ -68,8 +88,8 @@ public class ExpenseTracker
     {
         FileManagement _fileManagement = new FileManagement();
 
-        var categories = await _fileManagement.ReadFromFileAsync<List<Category>>(_categoryFileName);
-        int id = 1;
+        var categories = await _fileManagement.ReadFromFileAsync<Category>(_categoryFileName);
+        // int id = 1;
 
         if (categories != null)
         {
@@ -81,16 +101,59 @@ public class ExpenseTracker
                 return;
             }
 
-            id = categories[categories.Count - 1].Id + 1;
+            // id = categories[categories.Count - 1].Id + 1;
         }
 
         Category newCategory = new Category()
         {
+            ID = Guid.NewGuid(),
             Name = category
         };
 
         await _fileManagement.CreateFile<Category>(newCategory, _categoryFileName);
 
         WriteLine($"Creating a new expense category named {category}");
+    }
+
+    public async Task<Expense> AddExpense(string description, decimal amount, string accountName)
+    {
+        FileManagement _fileManagement = new FileManagement();
+        var accounts = await GetAccounts();
+        // var _categories = await GetCategories();
+        var _expenseLst = await GetExpenses();
+        // int id = 0;
+
+        // if(_expenseLst != null && _expenseLst.Count() > 0)
+        // {
+        //     id = _expenseLst.Last().Id;
+        // }
+
+        var _account = accounts.FirstOrDefault(a => a.Name == accountName) ?? new Account();
+
+        if (amount > _account.Balance)
+        {
+            ForegroundColor = ConsoleColor.Red;
+            WriteLine("Amount exceeds available balance");
+            ForegroundColor = foregroundColor;
+            return new Expense() { Account = new Account() };
+        }
+
+        var updatedAccount = _account;
+        updatedAccount.Balance -= amount;
+
+        Expense expense = new Expense
+        {
+            ID = Guid.NewGuid(),
+            Description = description,
+            Amount = amount,
+            Account = updatedAccount,
+            CreatedDate = DateTime.Today
+        };
+
+        await _fileManagement.CreateFile(expense, _expenseFileName);
+
+        await _fileManagement.CreateFile(updatedAccount, _accountFileName);
+
+        return expense;
     }
 }
