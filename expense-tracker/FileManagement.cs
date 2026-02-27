@@ -1,11 +1,10 @@
 using System.Reflection;
 using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Xml;
 
 public class FileManagement
 {
-    private readonly string _currentDirectory = Directory.GetCurrentDirectory();
+    // private readonly string _currentDirectory = Directory.GetCurrentDirectory();
+    private readonly string _currentDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
     private readonly string _folderName = "ExpenseTrackerData";
 
     private readonly string _folderPath;
@@ -14,38 +13,6 @@ public class FileManagement
     {
         _folderPath = Path.Combine(_currentDirectory, _folderName);
     }
-
-    //     public void CreateAccountFile(Account account)
-    //     {
-    //         List<Account> accounts = new List<Account>();
-    // ;
-    //         if (!Directory.Exists(_folderPath))
-    //         {
-    //             Directory.CreateDirectory(_folderPath);
-    //         }
-
-    //         string accountFilePath = Path.Combine(_folderPath, _accountFileName);
-
-    //         accounts = ReadFromFileAsync<List<Account>>(accountFilePath).Result;
-
-    //         if(accounts == null)
-    //         {
-    //             accounts = new List<Account>();
-    //         }
-
-    //         accounts.Add(account);
-
-    //         string accountJson = JsonSerializer.Serialize(accounts, new JsonSerializerOptions { WriteIndented = true });
-    //         File.WriteAllText(accountFilePath, accountJson);
-
-    //         // var lstAccounts = ReadFromFileAsync<List<Account>>(accountFilePath).Result;
-    //         // Console.WriteLine($"Total accounts: {lstAccounts.Count}");
-
-    //         // foreach(var a in lstAccounts)
-    //         // {
-    //         //     Console.WriteLine($"Account ID: {a.ID}, Name: {a.Name}, Type: {a.AccountType}, Balance: {a.Balance}");
-    //         // }
-    //     }
 
     public async Task<T> CreateFile<T>(T model, string _fileName) where T : IEntity 
     {

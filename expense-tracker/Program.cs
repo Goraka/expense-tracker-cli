@@ -1,22 +1,30 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using System.CommandLine;
+using System.Reflection;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using static System.Console;
 
 // ForegroundColor = ConsoleColor.DarkGreen;
 
-Config builder = new ConfigurationBuilder()
-    .SetBasePath(Directory.GetCurrentDirectory())
-    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-    .Build()
-    .Get<Config>() ?? new Config();
+// Config builder = new ConfigurationBuilder()
+//     .SetBasePath(Directory.GetCurrentDirectory())
+//     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+//     .Build()
+//     .Get<Config>() ?? new Config();
 
-decimal currentBudget = builder?.MonthlyBudget.Amount ?? 0;
+string _currentDirectory = Directory.GetCurrentDirectory();
+
+var configuration = new ConfigurationBuilder()
+    .SetBasePath(_currentDirectory)
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .Build();
+
+// decimal currentBudget = builder?.MonthlyBudget.Amount ?? 0;
 
 WriteLine("Hello, World!");
 
-CommandController commandController = new CommandController(builder);
+CommandController commandController = new CommandController(configuration);
 
 var rootCommand = new RootCommand("xp")
 {

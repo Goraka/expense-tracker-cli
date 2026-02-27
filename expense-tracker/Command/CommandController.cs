@@ -1,4 +1,5 @@
 using System.CommandLine;
+using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using static System.Console;
@@ -8,16 +9,45 @@ public class CommandController
     private static Config? _configurationBuilder;
     private readonly ConsoleColor foregroundColor = ForegroundColor;
     private readonly decimal _currentBudget = 0;
+    private readonly decimal _currentExpenses = 0;
+    // private readonly string _appDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+    private static readonly string _currentDirectory = Directory.GetCurrentDirectory();
+    private readonly IConfigurationRoot _configuration;
 
-    public CommandController(Config config)
+    public CommandController(IConfigurationRoot configuration)
     {
-        _configurationBuilder = config;
-        _currentBudget = _configurationBuilder.MonthlyBudget.Amount;
+        _configuration = configuration;
+        _configurationBuilder = _configuration.Get<Config>();
+        var monthlyBudgetSection = _configuration.GetSection("MonthlyBudget").Get<MonthlyBudget>();
+        _currentExpenses = monthlyBudgetSection?.Expenses ?? 0;
+        // if (monthlyBudgetSection != null)
+        // {
+        //     _currentBudget = monthlyBudgetSection.Amount - monthlyBudgetSection.Expenses;
+        // }
 
-        if (_configurationBuilder.MonthlyBudget.Expenses > 0)
+        if(monthlyBudgetSection?.Expenses > 0)
         {
-            _currentBudget = _configurationBuilder.MonthlyBudget.Expenses;
+            _currentBudget = monthlyBudgetSection.Amount - monthlyBudgetSection.Expenses;
         }
+        else
+        {
+            _currentBudget = monthlyBudgetSection?.Amount ?? 0;
+        }
+        
+        WriteLine($"Current budget: {_currentBudget}");
+        WriteLine($"Current expenses: {_currentExpenses}");
+
+        // _configurationBuilder = ConfigSettings.GetConfigurations(_currentDirectory);
+        // var _monthlyBudget = _configurationBuilder.MonthlyBudget.Amount;
+
+        // if (_configurationBuilder.MonthlyBudget.Expenses > 0)
+        // {
+        //     _currentBudget = _configurationBuilder.MonthlyBudget.Expenses;
+        // }
+        // else
+        // {
+        //     _currentBudget = _monthlyBudget;
+        // }
     }
 
     public Command SC_CREATE()
@@ -69,7 +99,7 @@ public class CommandController
             if (budget > 0)
             {
                 MonthlyBudget monthlyBudget = new MonthlyBudget { Amount = budget, Expenses = 0 };
-                ConfigSettings.SetValue(monthlyBudget, _configurationBuilder);
+                ConfigSettings.SetValue(monthlyBudget, _configurationBuilder, _currentDirectory);
                 WriteLine($"Creating a monthly budget of {budgetAmt}");
                 return;
             }
@@ -157,8 +187,16 @@ public class CommandController
 
             if (res != null)
             {
-                MonthlyBudget budget = new MonthlyBudget { Amount = _currentBudget, Expenses = _currentBudget - amt };
-                ConfigSettings.SetValue(budget, _configurationBuilder);
+                MonthlyBudget budget = new MonthlyBudget
+                {
+                    Amount = _configurationBuilder?.MonthlyBudget.Amount ?? 0,
+                    Expenses = amt + (_configurationBuilder?.MonthlyBudget.Expenses ?? 0)
+                };
+
+                ExpenseInfo expenseInfo = new ExpenseInfo { LastAddedExpenseID = res.ID };
+
+                ConfigSettings.SetValue<MonthlyBudget>(budget, _configurationBuilder, _currentDirectory);
+                ConfigSettings.SetValue(expenseInfo, _configurationBuilder, _currentDirectory);
 
                 WriteLine($"New expense added for {res.Account.Name}, Account balance is {res.Account.Balance}");
             }
