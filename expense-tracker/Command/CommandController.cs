@@ -20,10 +20,6 @@ public class CommandController
         _configurationBuilder = _configuration.Get<Config>();
         var monthlyBudgetSection = _configuration.GetSection("MonthlyBudget").Get<MonthlyBudget>();
         _currentExpenses = monthlyBudgetSection?.Expenses ?? 0;
-        // if (monthlyBudgetSection != null)
-        // {
-        //     _currentBudget = monthlyBudgetSection.Amount - monthlyBudgetSection.Expenses;
-        // }
 
         if(monthlyBudgetSection?.Expenses > 0)
         {
@@ -33,21 +29,6 @@ public class CommandController
         {
             _currentBudget = monthlyBudgetSection?.Amount ?? 0;
         }
-        
-        WriteLine($"Current budget: {_currentBudget}");
-        WriteLine($"Current expenses: {_currentExpenses}");
-
-        // _configurationBuilder = ConfigSettings.GetConfigurations(_currentDirectory);
-        // var _monthlyBudget = _configurationBuilder.MonthlyBudget.Amount;
-
-        // if (_configurationBuilder.MonthlyBudget.Expenses > 0)
-        // {
-        //     _currentBudget = _configurationBuilder.MonthlyBudget.Expenses;
-        // }
-        // else
-        // {
-        //     _currentBudget = _monthlyBudget;
-        // }
     }
 
     public Command SC_CREATE()
@@ -99,7 +80,10 @@ public class CommandController
             if (budget > 0)
             {
                 MonthlyBudget monthlyBudget = new MonthlyBudget { Amount = budget, Expenses = 0 };
-                ConfigSettings.SetValue(monthlyBudget, _configurationBuilder, _currentDirectory);
+                if (_configurationBuilder != null)
+                {
+                    ConfigSettings.SetValue(monthlyBudget, _configurationBuilder, _currentDirectory);
+                }
                 WriteLine($"Creating a monthly budget of {budgetAmt}");
                 return;
             }
@@ -185,12 +169,12 @@ public class CommandController
 
             var res = await expenseTracker.AddExpense(desc, amt, _acc);
 
-            if (res != null)
+            if (res != null && _configurationBuilder?.MonthlyBudget != null)
             {
                 MonthlyBudget budget = new MonthlyBudget
                 {
-                    Amount = _configurationBuilder?.MonthlyBudget.Amount ?? 0,
-                    Expenses = amt + (_configurationBuilder?.MonthlyBudget.Expenses ?? 0)
+                    Amount = _configurationBuilder.MonthlyBudget.Amount,
+                    Expenses = amt + _configurationBuilder.MonthlyBudget.Expenses
                 };
 
                 ExpenseInfo expenseInfo = new ExpenseInfo { LastAddedExpenseID = res.ID };
@@ -207,13 +191,22 @@ public class CommandController
 
     public Command SC_LIST()
     {
+        ExpenseTracker expenseTracker = new ExpenseTracker();
+        var _accounts = expenseTracker.GetAccounts().Result;
         var listCommand = new Command("list", "List all expenses");
 
         listCommand.Aliases.Add("ls");
 
-        listCommand.SetAction(context =>
+        listCommand.SetAction(async context =>
         {
             WriteLine("Listing all expenses...");
+            var expenses = await expenseTracker.GetExpensesList();
+            WriteLine($"# {"ID",-5} {"Description",-20} {"Amount",-10} {"Account",-15} {"CreatedDate",-20}");
+            foreach (var expense in expenses)
+            {
+                WriteLine($"# {expense.UserIdentifier, -5} {expense.Description, -20} {expense.Amount, -15} {_accounts.FirstOrDefault(a=>a.ID == expense.AccountID)?.Name, -20} {expense.CreatedDate, -20:d}");
+                // WriteLine($"Expense: {expense.Description}, Amount: {expense.Amount}, Account: {_accounts.FirstOrDefault(a=>a.ID == expense.AccountID)?.Name}");
+            }
         });
 
         return listCommand;

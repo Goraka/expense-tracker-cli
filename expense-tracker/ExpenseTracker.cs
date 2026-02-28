@@ -5,7 +5,7 @@ public class ExpenseTracker
     private readonly ConsoleColor foregroundColor = ForegroundColor;
     private readonly string _accountFileName = "accounts.json";
     private readonly string _categoryFileName = "categories.json";
-    private readonly string _expenseFileName = $"expenses.json_{DateTime.Now:yyyy-MM-dd}";
+    private readonly string _expenseFileName = $"expenses_{DateTime.Now:yyyy-MM-dd}.json";
 
     public ExpenseTracker()
     {
@@ -70,7 +70,6 @@ public class ExpenseTracker
                 Balance = balance
             };
 
-            // _fileManagement.CreateAccountFile(newAccount);
             await _fileManagement.CreateFile(newAccount, _accountFileName);
         }
         else
@@ -120,13 +119,7 @@ public class ExpenseTracker
         FileManagement _fileManagement = new FileManagement();
         var accounts = await GetAccounts();
         // var _categories = await GetCategories();
-        var _expenseLst = await GetExpenses();
-        // int id = 0;
-
-        // if(_expenseLst != null && _expenseLst.Count() > 0)
-        // {
-        //     id = _expenseLst.Last().Id;
-        // }
+        // var _expenseLst = await GetExpenses();
 
         var _account = accounts.FirstOrDefault(a => a.Name == accountName) ?? new Account();
 
@@ -155,5 +148,24 @@ public class ExpenseTracker
         await _fileManagement.CreateFile(updatedAccount, _accountFileName);
 
         return expense;
+    }
+
+    public async Task<List<ExpenseDTO>> GetExpensesList()
+    {
+        FileManagement _fileManagement = new FileManagement();
+
+        var expenses = await _fileManagement.ReadFilesAsync<Expense>("expenses_*.json");
+
+        List<ExpenseDTO> expenseDTOs = expenses.Select((e, index) => new ExpenseDTO
+        {
+            UserIdentifier = index + 1,
+            ID = e.ID,
+            Description = e.Description,
+            Amount = e.Amount,
+            AccountID = e.Account.ID,
+            CreatedDate = e.CreatedDate
+        }).ToList();
+
+        return expenseDTOs;
     }
 }

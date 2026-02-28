@@ -1,0 +1,14 @@
+[
+  {
+    "ID": "2e641f83-4982-440a-bdf3-863cf6c48cc7",
+    "Description": "smores",
+    "Amount": 10,
+    "Account": {
+      "ID": "16660206-9d6f-448d-9821-b3d12bf97e07",
+      "AccountType": "Savings",
+      "Name": "HNB",
+      "Balance": 214990
+    },
+    "CreatedDate": "2026-02-27T00:00:00+03:00"
+  }
+]

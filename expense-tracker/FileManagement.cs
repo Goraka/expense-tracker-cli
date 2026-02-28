@@ -3,8 +3,8 @@ using System.Text.Json;
 
 public class FileManagement
 {
-    // private readonly string _currentDirectory = Directory.GetCurrentDirectory();
-    private readonly string _currentDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+    private readonly string _currentDirectory = Directory.GetCurrentDirectory();
+    // private readonly string _currentDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? Directory.GetCurrentDirectory();
     private readonly string _folderName = "ExpenseTrackerData";
 
     private readonly string _folderPath;
@@ -80,5 +80,26 @@ public class FileManagement
         }
 
         return data;
+    }
+
+    public async Task<List<T>> ReadFilesAsync<T>(string fileName)
+    {
+        var fileContents = Directory.EnumerateFiles(_folderPath, fileName, SearchOption.TopDirectoryOnly)
+            .Select(file => File.ReadAllTextAsync(file))
+            .ToList();
+        
+        List<T> models = new List<T>();
+
+        foreach (var content in fileContents)
+        {
+            // Deserialize each file's content back into the model type T
+            List<T>? fileModels = JsonSerializer.Deserialize<List<T>>(await content);
+            if (fileModels != null)
+            {
+                models.AddRange(fileModels);
+            }
+        }
+
+        return models;
     }
 }

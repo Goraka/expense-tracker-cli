@@ -31,16 +31,10 @@ public static class ConfigSettings
 
     public static Config GetConfigurations(string path)
     {
-        // Config config = new ConfigurationBuilder()
-        //                 .SetBasePath(Directory.GetCurrentDirectory())
-        //                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-        //                 .Build()
-        //                 .Get<Config>() ?? new Config();
-
         var appSettingsPath = Path.Combine(path, "appsettings.json");
         var res = File.ReadAllText(appSettingsPath);
 
-        var appSettingsJson = JsonSerializer.Deserialize<Config>(res);
+        var appSettingsJson = JsonSerializer.Deserialize<Config>(res) ?? new Config();
 
         return appSettingsJson;
     }

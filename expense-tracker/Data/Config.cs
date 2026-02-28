@@ -1,7 +1,7 @@
 public class Config
 {
-    public MonthlyBudget MonthlyBudget { get; set; }
-    public ExpenseInfo ExpenseInfo { get; set; }
+    public MonthlyBudget? MonthlyBudget { get; set; }
+    public ExpenseInfo? ExpenseInfo { get; set; }
 }
 
 public class MonthlyBudget
