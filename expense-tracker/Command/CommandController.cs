@@ -21,7 +21,7 @@ public class CommandController
         var monthlyBudgetSection = _configuration.GetSection("MonthlyBudget").Get<MonthlyBudget>();
         _currentExpenses = monthlyBudgetSection?.Expenses ?? 0;
 
-        if(monthlyBudgetSection?.Expenses > 0)
+        if (monthlyBudgetSection?.Expenses > 0)
         {
             _currentBudget = monthlyBudgetSection.Amount - monthlyBudgetSection.Expenses;
         }
@@ -204,11 +204,63 @@ public class CommandController
             WriteLine($"# {"ID",-5} {"Description",-20} {"Amount",-10} {"Account",-15} {"CreatedDate",-20}");
             foreach (var expense in expenses)
             {
-                WriteLine($"# {expense.UserIdentifier, -5} {expense.Description, -20} {expense.Amount, -15} {_accounts.FirstOrDefault(a=>a.ID == expense.AccountID)?.Name, -20} {expense.CreatedDate, -20:d}");
+                WriteLine($"# {expense.UserIdentifier,-5} {expense.Description,-20} {expense.Amount,-15} {_accounts.FirstOrDefault(a => a.ID == expense.AccountID)?.Name,-20} {expense.CreatedDate,-20:d}");
                 // WriteLine($"Expense: {expense.Description}, Amount: {expense.Amount}, Account: {_accounts.FirstOrDefault(a=>a.ID == expense.AccountID)?.Name}");
             }
         });
 
         return listCommand;
+    }
+
+    public Command SC_DELETE()
+    {
+        ExpenseTracker expenseTracker = new ExpenseTracker();
+
+        var amount = new Option<int>("--id")
+        {
+            Description = "Add Expense Id to be Deleted",
+            Required = true,
+        };
+
+        var deleteCommand = new Command("delete", "Delete an expense") { amount };
+
+        deleteCommand.Aliases.Add("del");
+
+        deleteCommand.SetAction(async context =>
+        {
+            var expenses = await expenseTracker.GetExpensesList();
+            var findExpense = expenses.Find(e => e.UserIdentifier == context.GetValue(amount));
+            
+            if (findExpense != null)
+            {
+                var _fileName = $"{findExpense.CreatedDate:yyyy-MM-dd}.json";
+                var res = await expenseTracker.DeleteExpense(findExpense.ID, _fileName);
+
+                if (res && _configurationBuilder?.MonthlyBudget != null)
+                {
+                    MonthlyBudget budget = new MonthlyBudget
+                    {
+                        Amount = _configurationBuilder.MonthlyBudget.Amount,
+                        Expenses = _configurationBuilder.MonthlyBudget.Expenses - findExpense.Amount
+                    };
+                    
+                    ConfigSettings.SetValue(budget, _configurationBuilder, _currentDirectory);
+
+                    WriteLine($"Expense deleted.");
+                }
+                else
+                {
+                    WriteLine("Delete Failed");
+                }
+            }
+            else
+            {
+                ForegroundColor = ConsoleColor.Red;
+                WriteLine("No expense found in that range.");
+                ForegroundColor = foregroundColor;
+            }
+        });
+
+        return deleteCommand;
     }
 }

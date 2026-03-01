@@ -168,4 +168,33 @@ public class ExpenseTracker
 
         return expenseDTOs;
     }
+
+    public async Task<bool> DeleteExpense(Guid expenseId, string createdAt)
+    {
+        FileManagement _fileManagement = new FileManagement();
+
+        var _delExpenseFileName = $"expenses_{createdAt}";
+        
+        var _expenses = await _fileManagement.ReadFromFileAsync<Expense>(_delExpenseFileName);
+
+        var _expense = _expenses.Find(x=>x.ID == expenseId);
+
+        if(_expense != null)
+        {
+            var removeExpense = _expenses.Remove(_expense);
+            var res = await _fileManagement.CreateFile(_expenses, _delExpenseFileName);
+
+            if (res)
+            {
+                var _acc = _expense.Account;
+                _acc.Balance += _expense.Amount;
+
+                await _fileManagement.CreateFile(_acc, _accountFileName);
+            }
+
+            return res;
+        }
+
+        return false;
+    }
 }

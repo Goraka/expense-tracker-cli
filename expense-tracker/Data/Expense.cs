@@ -16,3 +16,9 @@ public class ExpenseDTO
     public Guid AccountID { get; set; }
     public DateTime CreatedDate { get; set; }
 }
+
+public class ExpenseIdentifier
+{
+    public Guid ID { get; set; }
+    public string FileName { get; set; } = string.Empty;
+}

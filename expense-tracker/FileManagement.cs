@@ -54,6 +54,33 @@ public class FileManagement
         }
     }
 
+    public async Task<bool> CreateFile<T>(List<T> models, string _fileName) where T : IEntity 
+    {
+        if (!Directory.Exists(_folderPath))
+        {
+            Directory.CreateDirectory(_folderPath);
+        }
+
+        string _filePath = Path.Combine(_folderPath, _fileName);
+
+        try
+        {
+            if (models == null)
+            {
+                throw new Exception($"No data found");
+            }
+
+            string modelJson = JsonSerializer.Serialize(models, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(_filePath, modelJson);
+
+            return true;
+        }
+        catch(Exception ex)
+        {
+            throw new Exception($"Failed to write to file '{_filePath}': {ex.Message}");
+        }
+    }
+
     // Returns a list of Type T
     public async Task<List<T>> ReadFromFileAsync<T>(string fileName)
     {
@@ -66,6 +93,11 @@ public class FileManagement
         }
 
         string fileContent = await File.ReadAllTextAsync(_filePath);
+
+        if (fileContent.Trim() == "{}" || fileContent.Trim() == "[]")
+        {
+            return new List<T>();
+        }
 
         if (string.IsNullOrEmpty(fileContent) || string.IsNullOrWhiteSpace(fileContent) || fileContent == "[]")
         {

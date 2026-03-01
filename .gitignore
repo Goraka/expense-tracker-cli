@@ -18,4 +18,5 @@ Thumbs.db
 dist/
 build/
 *.log
-bin/Debug/net9.0/ExpenseTrackerData/
+expense-tracker/bin/Debug/net9.0/ExpenseTrackerData/
+expense-tracker/ExpenseTrackerData/

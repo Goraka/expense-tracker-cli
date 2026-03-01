@@ -30,7 +30,8 @@ var rootCommand = new RootCommand("xp")
 {
     commandController.SC_CREATE(),
     commandController.SC_ADD(),
-    commandController.SC_LIST()
+    commandController.SC_LIST(),
+    commandController.SC_DELETE()
 };
 
 rootCommand.Description = "A simple cli based expense tracker";
