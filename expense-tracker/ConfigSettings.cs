@@ -1,6 +1,4 @@
-using System.Reflection;
 using System.Text.Json;
-using Microsoft.Extensions.Configuration;
 using static System.Console;
 
 public static class ConfigSettings

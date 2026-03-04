@@ -1,4 +1,3 @@
-using System.Text.Json;
 using static System.Console;
 public class ExpenseTracker
 {

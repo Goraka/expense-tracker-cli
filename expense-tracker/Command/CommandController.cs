@@ -1,8 +1,5 @@
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using System.Globalization;
-using System.Reflection;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using static System.Console;
 
@@ -206,7 +203,6 @@ public class CommandController
             foreach (var expense in expenses)
             {
                 WriteLine($"# {expense.UserIdentifier,-5} {expense.Description,-20} {expense.Amount,-15} {_accounts.FirstOrDefault(a => a.ID == expense.AccountID)?.Name,-20} {expense.CreatedDate,-20:d}");
-                // WriteLine($"Expense: {expense.Description}, Amount: {expense.Amount}, Account: {_accounts.FirstOrDefault(a=>a.ID == expense.AccountID)?.Name}");
             }
         });
 
@@ -305,11 +301,6 @@ public class CommandController
                 return [fromDate, toDate];
             }
         };
-
-        _rangeOption.Validators.Add(result =>
-        {
-
-        });
 
         var _summaryCmd = new Command("summary", "Show a total summary of expenses and remaining budget")
         {
