@@ -1,4 +1,6 @@
 using System.CommandLine;
+using System.CommandLine.Parsing;
+using System.Globalization;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -199,7 +201,6 @@ public class CommandController
 
         listCommand.SetAction(async context =>
         {
-            WriteLine("Listing all expenses...");
             var expenses = await expenseTracker.GetExpensesList();
             WriteLine($"# {"ID",-5} {"Description",-20} {"Amount",-10} {"Account",-15} {"CreatedDate",-20}");
             foreach (var expense in expenses)
@@ -230,7 +231,7 @@ public class CommandController
         {
             var expenses = await expenseTracker.GetExpensesList();
             var findExpense = expenses.Find(e => e.UserIdentifier == context.GetValue(amount));
-            
+
             if (findExpense != null)
             {
                 var _fileName = $"{findExpense.CreatedDate:yyyy-MM-dd}.json";
@@ -243,7 +244,7 @@ public class CommandController
                         Amount = _configurationBuilder.MonthlyBudget.Amount,
                         Expenses = _configurationBuilder.MonthlyBudget.Expenses - findExpense.Amount
                     };
-                    
+
                     ConfigSettings.SetValue(budget, _configurationBuilder, _currentDirectory);
 
                     WriteLine($"Expense deleted.");
@@ -262,5 +263,122 @@ public class CommandController
         });
 
         return deleteCommand;
+    }
+
+    public Command SC_SUMMARY()
+    {
+        ExpenseTracker _expenseTracker = new ExpenseTracker();
+        var _accounts = _expenseTracker.GetAccounts().Result;
+
+        var _rangeOption = new Option<DateOnly[]>("--range", ["--r"])
+        {
+            Description = "Set date range to get a summary for that period",
+            DefaultValueFactory = _ => [],
+            AllowMultipleArgumentsPerToken = true,
+            CustomParser = result =>
+            {
+                var values = result.Tokens;
+                DateOnly fromDate;
+                DateOnly toDate;
+
+                if (values.Count > 2)
+                {
+                    result.AddError("--range only accepts a {from} date and a {to} date");
+                    return default;
+                }
+
+                bool isValidFromDate = DateOnly.TryParseExact(values[0].ToString(), "dd-MM-yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out fromDate);
+                bool isValidToDate = DateOnly.TryParseExact(values[1].ToString(), "dd-MM-yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out toDate);
+
+                if (!isValidFromDate && !isValidToDate)
+                {
+                    result.AddError("Invalid format. Use dd-MM-yyyy");
+                    return default;
+                }
+
+                if (toDate < fromDate)
+                {
+                    result.AddError("Invalid range. The second date must be higher from the first date in the range");
+                    return default;
+                }
+
+                return [fromDate, toDate];
+            }
+        };
+
+        _rangeOption.Validators.Add(result =>
+        {
+
+        });
+
+        var _summaryCmd = new Command("summary", "Show a total summary of expenses and remaining budget")
+        {
+            _rangeOption
+        };
+
+        _summaryCmd.Aliases.Add("sum");
+
+        _summaryCmd.SetAction(async context =>
+        {
+            var expenses = await _expenseTracker.GetExpensesList();
+            var _dates = context.GetValue(_rangeOption);
+
+            if (expenses != null)
+            {
+                decimal sum = 0;
+
+                WriteLine("---------------------------------------------");
+                WriteLine();
+
+                if (_dates != null && _dates.Count() > 0)
+                {
+                    var _filterFromDate = _dates?[0];
+                    var _filterToDate = _dates?[1];
+
+                    var res = expenses.Where(x => DateOnly.FromDateTime(x.CreatedDate) >= _filterFromDate
+                                                && DateOnly.FromDateTime(x.CreatedDate) <= _filterToDate).ToList();
+
+                    if (res.Count > 0)
+                    {
+                        sum = res.Sum(x => x.Amount);
+                        WriteLine($"Total Expense for the period {_filterFromDate} to {_filterToDate} : {sum}");
+                    }
+                    else
+                    {
+                        ForegroundColor = ConsoleColor.Red;
+                        WriteLine("No expense data found for the given period");
+                        ForegroundColor = foregroundColor;
+                    }
+                }
+                else
+                {
+                    sum = expenses.Sum(x => x.Amount);
+                    WriteLine($"Total Expense : {sum}");
+                }
+
+                WriteLine();
+                WriteLine("---------------------------------------------");
+                WriteLine();
+
+                var _budget = _configurationBuilder?.MonthlyBudget?.Amount - _configurationBuilder?.MonthlyBudget?.Expenses;
+                WriteLine($"Current Budget Remaining: {_budget}");
+
+                WriteLine();
+                WriteLine("---------------------------------------------");
+                WriteLine();
+
+                WriteLine($"Accounts Balance");
+
+                foreach (var _acc in _accounts)
+                {
+                    WriteLine($"{_acc.Name} balance is {_acc.Balance}");
+                }
+
+                WriteLine();
+                WriteLine("---------------------------------------------");
+            }
+        });
+
+        return _summaryCmd;
     }
 }
