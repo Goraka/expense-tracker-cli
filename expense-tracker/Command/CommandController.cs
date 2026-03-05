@@ -372,4 +372,28 @@ public class CommandController
 
         return _summaryCmd;
     }
+
+    public Command SC_EXPORT()
+    {
+        ExpenseTracker _expenseTracker = new ExpenseTracker();
+        var exportCommand = new Command("export", "Export expenses data to a CSV file");
+
+        exportCommand.SetAction(context =>
+        {
+            var res = _expenseTracker.ExportExpensesToCSV().Result;
+
+            if (res)
+            {
+                WriteLine("Expenses exported to CSV successfully.");
+            }
+            else
+            {
+                ForegroundColor = ConsoleColor.Red;
+                WriteLine("Failed to export expenses to CSV.");
+                ForegroundColor = foregroundColor;
+            }
+        });
+
+        return exportCommand;
+    }
 }

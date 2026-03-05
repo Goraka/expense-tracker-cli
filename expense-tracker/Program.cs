@@ -21,7 +21,8 @@ var rootCommand = new RootCommand()
     commandController.SC_ADD(),
     commandController.SC_LIST(),
     commandController.SC_DELETE(),
-    commandController.SC_SUMMARY()
+    commandController.SC_SUMMARY(),
+    commandController.SC_EXPORT()
 };
 
 rootCommand.Description = "A simple cli based expense tracker";

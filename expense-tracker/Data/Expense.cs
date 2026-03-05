@@ -14,11 +14,15 @@ public class ExpenseDTO
     public string Description { get; set; } = string.Empty;
     public decimal Amount { get; set; }
     public Guid AccountID { get; set; }
+    public string Account {get;set;}=string.Empty;
     public DateTime CreatedDate { get; set; }
 }
 
-public class ExpenseIdentifier
+public class ExpenseExportDTO
 {
-    public Guid ID { get; set; }
-    public string FileName { get; set; } = string.Empty;
+    public int ID {get; set;}
+    public string Description {get;set;} = string.Empty;
+    public decimal Amount {get;set;}
+    public string Account{get;set;}=string.Empty;
+    public DateTime CreatedDate {get;set;}
 }

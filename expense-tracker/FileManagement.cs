@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 
 public class FileManagement
@@ -13,7 +14,7 @@ public class FileManagement
         _folderPath = Path.Combine(_currentDirectory, _folderName);
     }
 
-    public async Task<T> CreateFile<T>(T model, string _fileName) where T : IEntity 
+    public async Task<T> CreateFile<T>(T model, string _fileName) where T : IEntity
     {
         if (!Directory.Exists(_folderPath))
         {
@@ -31,9 +32,9 @@ public class FileManagement
                 models = new List<T>();
             }
 
-            var index = models.FindIndex(x=>x.ID == model.ID);
+            var index = models.FindIndex(x => x.ID == model.ID);
 
-            if(index != -1)
+            if (index != -1)
             {
                 models[index] = model;
             }
@@ -41,19 +42,19 @@ public class FileManagement
             {
                 models.Add(model);
             }
-        
+
             string modelJson = JsonSerializer.Serialize(models, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(_filePath, modelJson);
 
             return model;
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             throw new Exception($"Failed to write to file '{_filePath}': {ex.Message}");
         }
     }
 
-    public async Task<bool> CreateFile<T>(List<T> models, string _fileName) where T : IEntity 
+    public async Task<bool> CreateFile<T>(List<T> models, string _fileName) where T : IEntity
     {
         if (!Directory.Exists(_folderPath))
         {
@@ -70,17 +71,16 @@ public class FileManagement
             }
 
             string modelJson = JsonSerializer.Serialize(models, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(_filePath, modelJson);
+            await File.WriteAllTextAsync(_filePath, modelJson);
 
             return true;
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             throw new Exception($"Failed to write to file '{_filePath}': {ex.Message}");
         }
     }
 
-    // Returns a list of Type T
     public async Task<List<T>> ReadFromFileAsync<T>(string fileName)
     {
         string _filePath = Path.Combine(_folderPath, fileName);
@@ -88,7 +88,6 @@ public class FileManagement
         if (!File.Exists(_filePath))
         {
             return new List<T>();
-            // throw new FileNotFoundException($"The file '{fileName}' was not found in the directory '{_folderPath}'.");
         }
 
         string fileContent = await File.ReadAllTextAsync(_filePath);
@@ -118,7 +117,7 @@ public class FileManagement
         var fileContents = Directory.EnumerateFiles(_folderPath, fileName, SearchOption.TopDirectoryOnly)
             .Select(file => File.ReadAllTextAsync(file))
             .ToList();
-        
+
         List<T> models = new List<T>();
 
         foreach (var content in fileContents)
@@ -132,5 +131,46 @@ public class FileManagement
         }
 
         return models;
+    }
+
+    public async Task WriteToCSV<T>(List<T> models, string fileName)
+    {
+        string _filePath = Path.Combine(_folderPath, fileName);
+        var header = "";
+        var builder = new StringBuilder();
+
+        var info = typeof(T).GetProperties();
+
+        if (!File.Exists(_filePath))
+        {
+            using (var file = File.Create(_filePath))
+            {
+                foreach (var prop in typeof(T).GetProperties())
+                {
+                    header += prop.Name + ",";
+                }
+
+                header = header.Substring(0, header.Length - 2);
+                builder.AppendLine(header);
+                
+                foreach (var item in models)
+                {
+                    var line = "";
+
+                    foreach (var prop in info)
+                    {
+                        line += prop.GetValue(item, null) + ",";
+                    }
+
+                    line = line.Substring(0, line.Length - 2);
+                    builder.AppendLine(line);
+                }
+            }
+
+            using (var writer = new StreamWriter(_filePath, true))
+            {
+                await writer.WriteAsync(builder.ToString());
+            }
+        }
     }
 }

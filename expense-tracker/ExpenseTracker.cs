@@ -4,6 +4,7 @@ public class ExpenseTracker
     private readonly ConsoleColor foregroundColor = ForegroundColor;
     private readonly string _accountFileName = "accounts.json";
     private readonly string _categoryFileName = "categories.json";
+    private readonly string _expenseCSV = $"expenses_{DateTime.Now:yyyy-MM-dd}.csv";
     private readonly string _expenseFileName = $"expenses_{DateTime.Now:yyyy-MM-dd}.json";
 
     public ExpenseTracker()
@@ -162,6 +163,7 @@ public class ExpenseTracker
             Description = e.Description,
             Amount = e.Amount,
             AccountID = e.Account.ID,
+            Account = e.Account.Name,
             CreatedDate = e.CreatedDate
         }).ToList();
 
@@ -195,5 +197,36 @@ public class ExpenseTracker
         }
 
         return false;
+    }
+
+    public async Task<bool> ExportExpensesToCSV()
+    {
+        FileManagement _fileManagement = new FileManagement();
+        var expenses = GetExpensesList().Result;
+
+        List<ExpenseExportDTO> expenseExports = new List<ExpenseExportDTO>();
+
+        if (expenses != null)
+        {
+            int _id = 1;
+            foreach(var expense in expenses)
+            {
+                var exportData = new ExpenseExportDTO()
+                {
+                    ID = _id,
+                    Description = expense.Description,
+                    Account = expense.Account,
+                    Amount = expense.Amount,
+                    CreatedDate = expense.CreatedDate
+                };
+
+                expenseExports.Add(exportData);
+                _id++;
+            }
+        }
+        
+        await _fileManagement.WriteToCSV(expenseExports, _expenseCSV);
+
+        return true;
     }
 }

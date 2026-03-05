@@ -1,5 +1,5 @@
 # Expense Tracker CLI
-A command line tool to track expenses built with .NET and utilizing System.CommandLine. A user friendly tool to track expense by categories and account with features to set monthly budget and balance accounts. 
+A command line tool to track expenses built with .NET and utilizing System.CommandLine. A user friendly tool to track expense by categories and account with features to set monthly budget and balance accounts. Built this after properly looking into roadmap.sh/projects haha. My aim here was to learn how to work with filesystems
 
 ## Features
 
@@ -26,11 +26,10 @@ dotnet clean
 dotnet build
 ```
 
-### Usages
+## Usages
 
 Options:
   -?, -h, --help  Show help and usage information
-  --version       Show version information
 
 Commands:
   create        Create a new account, budget or category
@@ -70,4 +69,9 @@ expense-tracker sum
 
 For Periodic Summary
 expense-tracker sum --range "03-03-2026" "10-03-2026" 
+```
+**Export to CSV**
+
+```
+expense-tracker export
 ```
